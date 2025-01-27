@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anypuzzle - Free Move</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #f0e68c;
+        transition: background-color 0.5s ease;
+      }
+      #gameTitle {
+        margin-top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      #introContainer {
+        text-align: center;
+        max-width: 90%;
+        padding: 20px;
+      }
+      #description {
+        margin: 20px 0;
+        font-size: 18px;
+      }
+      #controls {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+      }
+      #imagePreviewContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+      }
+      #imagePreview {
+        width: 150px;
+        height: 150px;
+        border: 2px solid #000;
+        background-size: cover;
+        background-position: center;
+        margin-top: 10px;
+      }
+      #puzzleContainer {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-gap: 2px;
+        margin-top: 20px;
+        width: 80vw;
+        max-width: 500px;
+        box-sizing: border-box;
+      }
+      .puzzle-piece {
+        width: 100%;
+        padding-top: 100%;
+        border: 1px solid #000;
+        background-size: 500px 500px;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: relative;
+        transition: transform 0.2s;
+        cursor: grab;
+        box-sizing: border-box;
+      }
+      .blank {
+        background: transparent;
+      }
+      #footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 14px;
+        color: #333;
+        width: 80vw;
+        max-width: 500px;
+        box-sizing: border-box;
+      }
+      /* Modal styles */
+      #congratulationsModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+      }
+      #congratulationsContent {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      #balloons {
+        margin: 20px 0;
+      }
+      #restartButton,
+      #quitGameButton {
+        margin: 5px;
+      }
+      .pulse {
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        animation: pulseAnimation 1.5s infinite;
+        transition: background-color 0.3s;
+      }
+      .pulse:hover {
+        background-color: #45a049;
+      }
+      @keyframes pulseAnimation {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      /* Day/Night Mode */
+      .night-mode {
+        background-color: #2f4f4f;
+        color: #fff;
+      }
+      /* Mute Button */
+      #muteButton {
+        padding: 10px 20px;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      #muteButton:hover {
+        background-color: #d32f2f;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gameTitle">Welcome to Puzzle Quest</div>
+    <div id="introContainer">
+      <div id="description">
+        <p>
+          Welcome to Puzzle Quest! Solve exciting puzzles by rearranging pieces to match the original image. Test your skills and enjoy the challenge as you complete each level with the least number of moves possible!
+        </p>
+        <p>
+          You can move the puzzle pieces by dragging them, and double-tap to lock them in place once you've positioned them correctly. Can you solve the puzzle and claim victory?
+        </p>
+      </div>
+      <button class="pulse" id="startGameButton">Start Game</button>
+      <p>Designed by Nana Kofi Fosu</p>
+    </div>
+
+    <div id="controls" style="display: none;">
+      <input type="file" id="uploadInput" accept="image/*" />
+      <button id="reshuffleButton">Reshuffle</button>
+      <button id="quitButton">Quit</button>
+      <button id="nightModeButton">Toggle Day/Night Mode</button>
+      <button id="muteButton">Mute/Unmute Music</button>
+    </div>
+
+    <div id="imagePreviewContainer" style="display: none;">
+      <div>Original Image Preview:</div>
+      <div id="imagePreview"></div>
+    </div>
+
+    <div id="puzzleContainer" style="display: none;"></div>
+
+    <!-- Congratulations Modal -->
+    <div id="congratulationsModal">
+      <div id="congratulationsContent">
+        <div id="balloons">🎈🎈🎈</div>
+        <h2>Congratulations!</h2>
+        <p>You've completed the puzzle!</p>
+        <button id="restartButton">Restart Game</button>
+        <button id="quitGameButton">Quit</button>
+      </div>
+    </div>
+
+    <audio id="themeSong" loop>
+      <source src="song.mp4" type="audio/mp4" />
+    </audio>
+
+    <script>
+      const gridSize = 5;
+      const puzzleContainer = document.getElementById("puzzleContainer");
+      const uploadInput = document.getElementById("uploadInput");
+      const reshuffleButton = document.getElementById("reshuffleButton");
+      const quitButton = document.getElementById("quitButton");
+      const imagePreview = document.getElementById("imagePreview");
+      const congratulationsModal = document.getElementById("congratulationsModal");
+      const restartButton = document.getElementById("restartButton");
+      const quitGameButton = document.getElementById("quitGameButton");
+      const startGameButton = document.getElementById("startGameButton");
+      const introContainer = document.getElementById("introContainer");
+      const themeSong = document.getElementById("themeSong");
+      const muteButton = document.getElementById("muteButton");
+      const nightModeButton = document.getElementById("nightModeButton");
+
+      let imageSrc = "";
+      let puzzlePieces = [];
+      let draggedPiece = null;
+      let lockedPieces = new Set();
+      let isMuted = false;
+      let isNightMode = false;
+
+      // Show the game interface after clicking Start Game
+      startGameButton.addEventListener("click", () => {
+        introContainer.style.display = "none"; // Hide intro page
+        document.getElementById("controls").style.display = "flex"; // Show controls
+        document.getElementById("imagePreviewContainer").style.display = "flex"; // Show image preview
+        puzzleContainer.style.display = "grid"; // Show puzzle grid
+        themeSong.play(); // Start playing theme song
+      });
+
+      function initializePuzzle(imageSrc) {
+        puzzleContainer.innerHTML = "";
+        puzzlePieces = [];
+
+        const pieceIndexes = [...Array(gridSize * gridSize).keys()];
+        pieceIndexes.sort(() => Math.random() - 0.5);
+
+        pieceIndexes.forEach((index, i) => {
+          const piece = document.createElement("div");
+          piece.classList.add("puzzle-piece");
+
+          if (index === gridSize * gridSize - 1) {
+            piece.classList.add("blank");
+          } else {
+            piece.style.backgroundImage = `url(${imageSrc})`;
+            piece.style.backgroundPosition = `-${(index % gridSize) * 100}px -${
+              Math.floor(index / gridSize) * 100
+            }px`;
+          }
+          piece.dataset.index = index;
+          piece.draggable = true;
+          piece.addEventListener("dragstart", handleDragStart);
+          piece.addEventListener("dragover", handleDragOver);
+          piece.addEventListener("drop", handleDrop);
+          piece.addEventListener("dblclick", handleDoubleTap);
+          puzzlePieces[i] = piece;
+          puzzleContainer.appendChild(piece);
+        });
+      }
+
+      function handleDragStart(e) {
+        if (lockedPieces.has(e.target.dataset.index)) {
+          e.preventDefault(); // Prevent drag if locked
+          return;
+        }
+        draggedPiece = e.target;
+        setTimeout(() => (e.target.style.opacity = "0.5"), 0);
+      }
+
+      function handleDragOver(e) {
+        e.preventDefault();
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        if (draggedPiece && draggedPiece !== e.target && !lockedPieces.has(e.target.dataset.index)) {
+          const targetPiece = e.target;
+          const targetIndex = Array.from(puzzleContainer.children).indexOf(targetPiece);
+          const draggedIndex = Array.from(puzzleContainer.children).indexOf(draggedPiece);
+
+          puzzleContainer.insertBefore(draggedPiece, puzzleContainer.children[targetIndex]);
+          puzzleContainer.insertBefore(targetPiece, puzzleContainer.children[draggedIndex]);
+
+          puzzlePieces[draggedIndex] = targetPiece;
+          puzzlePieces[targetIndex] = draggedPiece;
+          draggedPiece.style.opacity = "1";
+          checkCompletion();
+        }
+        draggedPiece = null;
+      }
+
+      function checkCompletion() {
+        const isComplete = puzzlePieces.every(
+          (piece, index) => piece.dataset.index == index
+        );
+        if (isComplete) {
+          setTimeout(showCongratulations, 100);
+        }
+      }
+
+      function showCongratulations() {
+        themeSong.pause(); // Stop theme song when puzzle is completed
+        congratulationsModal.style.display = "flex";
+      }
+
+      function handleDoubleTap(e) {
+        const piece = e.target;
+        if (lockedPieces.has(piece.dataset.index)) {
+          lockedPieces.delete(piece.dataset.index); // Unlock piece
+          piece.style.opacity = "1";
+        } else {
+          lockedPieces.add(piece.dataset.index); // Lock piece
+          piece.style.opacity = "0.3";
+        }
+      }
+
+      reshuffleButton.addEventListener("click", () => {
+        initializePuzzle(imageSrc);
+      });
+
+      quitButton.addEventListener("click", () => {
+        location.reload();
+      });
+
+      restartButton.addEventListener("click", () => {
+        initializePuzzle(imageSrc);
+        congratulationsModal.style.display = "none";
+      });
+
+      quitGameButton.addEventListener("click", () => {
+        location.reload();
+      });
+
+      muteButton.addEventListener("click", () => {
+        isMuted = !isMuted;
+        themeSong.muted = isMuted;
+        muteButton.textContent = isMuted ? "Unmute Music" : "Mute Music";
+      });
+
+      nightModeButton.addEventListener("click", () => {
+        isNightMode = !isNightMode;
+        document.body.classList.toggle("night-mode", isNightMode);
+      });
+
+      uploadInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (readerEvent) => {
+            imageSrc = readerEvent.target.result;
+            imagePreview.style.backgroundImage = `url(${imageSrc})`;
+            initializePuzzle(imageSrc);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    </script>
+  </body>
+</html>
