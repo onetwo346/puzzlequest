@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Anypuzzle - Free Move</title>
     <style>
+      /* Your CSS styles here */
       body {
         margin: 0;
         display: flex;
@@ -35,104 +36,6 @@
         gap: 10px;
         flex-direction: column;
         align-items: center;
-      }
-<script>
-    let draggedPiece = null;
-    let lockedPieces = new Set();
-
-    // Touch event handling functions
-    let touchStartX, touchStartY;
-
-    // When touch starts on a piece
-    function handleTouchStart(e) {
-        if (lockedPieces.has(e.target.dataset.index)) {
-            e.preventDefault();  // Prevent dragging if piece is locked
-            return;
-        }
-        draggedPiece = e.target;
-        touchStartX = e.touches[0].clientX;  // Get touch start position (X)
-        touchStartY = e.touches[0].clientY;  // Get touch start position (Y)
-        setTimeout(() => (e.target.style.opacity = "0.5"), 0);  // Make piece semi-transparent
-    }
-
-    // While dragging the piece
-    function handleTouchMove(e) {
-        if (!draggedPiece) return;
-        const deltaX = e.touches[0].clientX - touchStartX;  // Calculate movement on X-axis
-        const deltaY = e.touches[0].clientY - touchStartY;  // Calculate movement on Y-axis
-        draggedPiece.style.transform = `translate(${deltaX}px, ${deltaY}px)`;  // Move piece accordingly
-    }
-
-    // When touch ends (drop the piece)
-    function handleTouchEnd(e) {
-        if (!draggedPiece) return;
-        const targetPiece = e.target;
-        if (draggedPiece !== targetPiece && !lockedPieces.has(targetPiece.dataset.index)) {
-            const targetIndex = Array.from(puzzleContainer.children).indexOf(targetPiece);
-            const draggedIndex = Array.from(puzzleContainer.children).indexOf(draggedPiece);
-
-            // Swap the pieces if they were not the same piece
-            puzzleContainer.insertBefore(draggedPiece, puzzleContainer.children[targetIndex]);
-            puzzleContainer.insertBefore(targetPiece, puzzleContainer.children[draggedIndex]);
-
-            // Update the puzzle pieces array
-            puzzlePieces[draggedIndex] = targetPiece;
-            puzzlePieces[targetIndex] = draggedPiece;
-        }
-        draggedPiece.style.transform = '';  // Reset transform
-        draggedPiece.style.opacity = '1';  // Reset opacity
-        checkCompletion();  // Check if puzzle is complete
-        draggedPiece = null;  // Clear the dragged piece
-    }
-
-    // Mouse event handling functions
-    function handleDragStart(e) {
-        if (lockedPieces.has(e.target.dataset.index)) {
-            e.preventDefault();  // Prevent dragging if piece is locked
-            return;
-        }
-        draggedPiece = e.target;
-        draggedPiece.style.opacity = '0.5';  // Make piece semi-transparent
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();  // Allow drop by preventing the default action
-    }
-
-    function handleDrop(e) {
-        e.preventDefault();  // Prevent default drop behavior
-
-        if (!draggedPiece) return;
-        const targetPiece = e.target;
-        if (draggedPiece !== targetPiece && !lockedPieces.has(targetPiece.dataset.index)) {
-            const targetIndex = Array.from(puzzleContainer.children).indexOf(targetPiece);
-            const draggedIndex = Array.from(puzzleContainer.children).indexOf(draggedPiece);
-
-            // Swap the pieces if they were not the same piece
-            puzzleContainer.insertBefore(draggedPiece, puzzleContainer.children[targetIndex]);
-            puzzleContainer.insertBefore(targetPiece, puzzleContainer.children[draggedIndex]);
-
-            // Update the puzzle pieces array
-            puzzlePieces[draggedIndex] = targetPiece;
-            puzzlePieces[targetIndex] = draggedPiece;
-        }
-        draggedPiece.style.opacity = '1';  // Reset opacity
-        checkCompletion();  // Check if puzzle is complete
-        draggedPiece = null;  // Clear the dragged piece
-    }
-
-    // Update event listeners for both touch and mouse
-    document.querySelectorAll('.puzzle-piece').forEach(piece => {
-        piece.addEventListener('touchstart', handleTouchStart);
-        piece.addEventListener('touchmove', handleTouchMove);
-        piece.addEventListener('touchend', handleTouchEnd);
-        
-        piece.addEventListener('dragstart', handleDragStart);
-        piece.addEventListener('dragover', handleDragOver);
-        piece.addEventListener('drop', handleDrop);
-    });
-</script>
-
       }
       #imagePreviewContainer {
         display: flex;
@@ -298,6 +201,7 @@
     </audio>
 
     <script>
+      // Your JavaScript code here
       const gridSize = 5;
       const puzzleContainer = document.getElementById("puzzleContainer");
       const uploadInput = document.getElementById("uploadInput");
